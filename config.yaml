@@ -1,0 +1,52 @@
+default:
+  pipeline:
+    name: "pipeline_nist_nvd"
+  # https://dlthub.com/docs/dlt-ecosystem/verified-sources/rest_api/basic#source-configuration
+  client:
+    base_url: "https://services.nvd.nist.gov"
+    auth:
+      name: apiKey
+      type: api_key
+      api_key: use_your_own_api_token_here
+      location: header
+    # https://dlthub.com/docs/dlt-ecosystem/verified-sources/rest_api/basic#pagination
+    paginator:
+      type: offset
+      limit: 2000
+      limit_param: resultsPerPage
+      offset: 0
+      offset_param: startIndex
+      total_path: totalResults
+  resources:
+    - name: nist_nvd
+      endpoint:
+        method: GET
+        path: rest/json/cves/2.0
+        data_selector: vulnerabilities
+        params: ~
+  models:
+    model: "models.nist_nvd.NVD"
+    parse_data_function: "models.nist_nvd.Response"
+  source:
+    name: source_nist_nvd
+  resource:
+    name: resource_nist_nvd
+  resource_defaults:
+    primary_key: cve_id
+    write_disposition:
+      disposition: merge
+      strategy: delete-insert
+
+development:
+  pipeline:
+    name: "nist_nvd_dev"
+    destination: duckdb
+    dataset_name: nist_nvd
+    incremental_load: true
+
+production:
+  pipeline:
+    name: "nist_nvd_prod"
+    destination: duckdb
+    dataset_name: nist_nvd
+    incremental_load: true
